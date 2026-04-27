@@ -1,0 +1,43 @@
+---
+description: Require official documentation as source of truth for dependency installation and project setup steps
+alwaysApply: true
+---
+
+# Official Docs First: Dependencies and Setup
+
+## Core Rule
+
+- Install dependencies only using versions and commands from the official documentation for the framework, library, or tool.
+- Follow project setup strictly from official documentation before using community guides.
+- If official docs are missing, ambiguous, or outdated, state that explicitly and ask for confirmation before proceeding.
+
+## Required Workflow
+
+1. Identify the exact official docs for the requested technology.
+2. Confirm compatibility with this project's stack and package manager.
+3. Run the documented install/setup commands with minimal changes.
+4. Verify the setup using the official validation step (or closest documented check).
+5. Report the docs used with links.
+
+## Guardrails
+
+- Do not invent package versions.
+- Do not prefer third-party tutorials when official docs exist.
+- Do not add optional dependencies or tooling unless requested.
+- Keep changes minimal and directly related to setup.
+
+## Examples
+
+```bash
+# ❌ Bad: guessed version
+npm install some-lib@1.2.3
+
+# ✅ Good: install from official docs guidance
+npm install some-lib
+```
+
+```markdown
+✅ Installed using official docs:
+- https://docs.example.com/getting-started
+- https://docs.example.com/installation
+```
