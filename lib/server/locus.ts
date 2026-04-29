@@ -3,9 +3,9 @@ import { z } from "zod";
 const createSessionSchema = z.object({
   amount: z.string(),
   description: z.string(),
-  successUrl: z.string().url(),
-  cancelUrl: z.string().url(),
-  webhookUrl: z.string().url(),
+  successUrl: z.string().url().optional(),
+  cancelUrl: z.string().url().optional(),
+  webhookUrl: z.string().url().optional(),
   metadata: z.record(z.string(), z.string()).default({}),
 });
 
@@ -36,31 +36,73 @@ export async function createLocusSession(input: z.input<typeof createSessionSche
 
   if (!apiKey) throw new Error("LOCUS_API_KEY is required");
 
-  const response = await fetch(`${apiBase}/checkout/sessions`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  const isLocalUrl = (url: string | undefined) =>
+    !url || url.includes("localhost") || url.includes("127.0.0.1");
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Failed to create Locus session: ${response.status} ${body}`);
+  // Avoid sending localhost callbacks to Locus in local development.
+  const cleanPayload = {
+    amount: payload.amount,
+    description: payload.description,
+    ...(payload.successUrl ? { successUrl: payload.successUrl } : {}),
+    ...(payload.cancelUrl ? { cancelUrl: payload.cancelUrl } : {}),
+    ...(payload.webhookUrl && !isLocalUrl(payload.webhookUrl) ? { webhookUrl: payload.webhookUrl } : {}),
+    ...(payload.metadata ? { metadata: payload.metadata } : {}),
+  };
+
+  const attemptRequest = async (requestBody: Record<string, unknown>) =>
+    fetch(`${apiBase}/checkout/sessions`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+  let response = await attemptRequest(cleanPayload);
+  let responseText = await response.text();
+
+  // Fallback for APIs that expect snake_case keys.
+  if (!response.ok && response.status >= 500) {
+    const snakeCasePayload: Record<string, unknown> = {
+      amount: cleanPayload.amount,
+      description: cleanPayload.description,
+      ...(cleanPayload.successUrl ? { success_url: cleanPayload.successUrl } : {}),
+      ...(cleanPayload.cancelUrl ? { cancel_url: cleanPayload.cancelUrl } : {}),
+      ...(cleanPayload.webhookUrl ? { webhook_url: cleanPayload.webhookUrl } : {}),
+      ...(cleanPayload.metadata ? { metadata: cleanPayload.metadata } : {}),
+    };
+
+    response = await attemptRequest(snakeCasePayload);
+    responseText = await response.text();
   }
 
-  const json = (await response.json()) as {
+  if (!response.ok) {
+    const hints: string[] = [];
+    hints.push(`status=${response.status}`);
+    if (isLocalUrl(payload.webhookUrl)) hints.push("webhookUrl_localhost_not_sent");
+    if (!payload.successUrl || !payload.cancelUrl) hints.push("missing_success_or_cancel_url");
+    hints.push("check_locus_api_base_and_key_environment_match");
+    throw new Error(
+      `Failed to create Locus session: ${response.status} ${responseText} [${hints.join(", ")}]`,
+    );
+  }
+
+  const json = JSON.parse(responseText) as {
     data?: {
       id?: string;
+      sessionId?: string;
       checkoutUrl?: string;
+      checkout_url?: string;
       expiresAt?: string;
+      expires_at?: string;
       status?: string;
       webhookSecret?: string;
+      webhook_secret?: string;
     };
   };
 
-  const id = json.data?.id;
+  const id = json.data?.id || json.data?.sessionId;
   if (!id) throw new Error("Locus response missing session ID");
 
   const normalizedStatus = (json.data?.status || "PENDING").toUpperCase();
@@ -68,9 +110,9 @@ export async function createLocusSession(input: z.input<typeof createSessionSche
 
   return {
     sessionId: id,
-    checkoutUrl: json.data?.checkoutUrl || null,
-    expiresAt: json.data?.expiresAt || null,
-    webhookSecret: json.data?.webhookSecret || null,
+    checkoutUrl: json.data?.checkoutUrl || json.data?.checkout_url || null,
+    expiresAt: json.data?.expiresAt || json.data?.expires_at || null,
+    webhookSecret: json.data?.webhookSecret || json.data?.webhook_secret || null,
     status: validStatuses.has(normalizedStatus) ? (normalizedStatus as LocusSessionResult["status"]) : "PENDING",
   };
 }

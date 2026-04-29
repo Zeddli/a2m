@@ -27,41 +27,47 @@ export async function POST(request: Request) {
 
     const baseUrl = process.env.APP_BASE_URL || "http://localhost:3000";
 
-    const [order] = await db
-      .insert(orders)
-      .values({
-        listingId: listing.id,
-        buyerAgentId: buyer.id,
-        sellerAgentId: listing.sellerAgentId,
-        amountUsdc: listing.priceUsdc,
-        status: "PENDING",
-      })
-      .returning();
+    const [checkout] = await db.transaction(async (tx) => {
+      const [order] = await tx
+        .insert(orders)
+        .values({
+          listingId: listing.id,
+          buyerAgentId: buyer.id,
+          sellerAgentId: listing.sellerAgentId,
+          amountUsdc: listing.priceUsdc,
+          status: "PENDING",
+        })
+        .returning();
 
-    const session = await createLocusSession({
-      amount: listing.priceUsdc,
-      description: `Order ${order.id} - ${listing.title}`,
-      successUrl: `${baseUrl}/orders/${order.id}?payment=success`,
-      cancelUrl: `${baseUrl}/orders/${order.id}?payment=cancel`,
-      webhookUrl: `${baseUrl}/api/webhooks/locus`,
-      metadata: {
-        orderId: order.id,
-        buyerAgentId: buyer.id,
-        sellerAgentId: listing.sellerAgentId,
-      },
+      const session = await createLocusSession({
+        amount: listing.priceUsdc,
+        description: `Order ${order.id} - ${listing.title}`,
+        successUrl: `${baseUrl}/orders/${order.id}?payment=success`,
+        cancelUrl: `${baseUrl}/orders/${order.id}?payment=cancel`,
+        webhookUrl: `${baseUrl}/api/webhooks/locus`,
+        metadata: {
+          orderId: order.id,
+          buyerAgentId: buyer.id,
+          sellerAgentId: listing.sellerAgentId,
+        },
+      });
+
+      const [savedCheckout] = await tx
+        .insert(checkoutSessions)
+        .values({
+          orderId: order.id,
+          sessionId: session.sessionId,
+          checkoutUrl: session.checkoutUrl,
+          status: session.status,
+          expiresAt: session.expiresAt ? new Date(session.expiresAt) : null,
+          webhookSecret: session.webhookSecret,
+        })
+        .returning();
+
+      return [savedCheckout];
     });
 
-    const [checkout] = await db
-      .insert(checkoutSessions)
-      .values({
-        orderId: order.id,
-        sessionId: session.sessionId,
-        checkoutUrl: session.checkoutUrl,
-        status: session.status,
-        expiresAt: session.expiresAt ? new Date(session.expiresAt) : null,
-        webhookSecret: session.webhookSecret,
-      })
-      .returning();
+    const [order] = await db.select().from(orders).where(eq(orders.id, checkout.orderId)).limit(1);
 
     return ok({
       order,
@@ -70,6 +76,7 @@ export async function POST(request: Request) {
         checkoutUrl: checkout.checkoutUrl,
         status: checkout.status,
         expiresAt: checkout.expiresAt,
+        orderId: checkout.orderId,
       },
     });
   } catch (error) {

@@ -29,6 +29,10 @@ export async function POST(request: Request, context: { params: Promise<{ sessio
 
     const buyerLocusApiKey = request.headers.get("x-locus-api-key");
     if (!buyerLocusApiKey) return fail("Missing x-locus-api-key header", 400);
+    const serverLocusApiKey = process.env.LOCUS_API_KEY;
+    if (serverLocusApiKey && buyerLocusApiKey.trim() === serverLocusApiKey.trim()) {
+      return fail("Shared server Locus API key is not allowed. Use the buyer's own Locus key.", 403);
+    }
 
     const paymentResult = await payLocusSession(sessionId, buyerLocusApiKey);
     return ok({
