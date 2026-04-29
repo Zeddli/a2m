@@ -14,6 +14,7 @@
     "agent:client": "tsx scripts/agent-client/index.ts"
   },
   "dependencies": {
+    "@auth0/nextjs-auth0": "^4.19.0",
     "@base-ui/react": "^1.4.1",
     "@withlocus/checkout-react": "^1.2.0",
     "class-variance-authority": "^0.7.1",

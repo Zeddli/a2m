@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useUser } from "@auth0/nextjs-auth0";
 import { usePathname, useRouter } from "next/navigation";
 
 // Renders global sticky navigation and a contextual back action.
@@ -8,6 +9,7 @@ export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const isHomePage = pathname === "/";
+  const { user, isLoading } = useUser();
 
   return (
     <header className="sticky top-0 z-50 border-b border-blue-100/70 bg-white/70 backdrop-blur-xl">
@@ -38,6 +40,31 @@ export function TopNav() {
           <Link href="/docs/agent-quickstart" className="hover:text-zinc-900">
             Docs
           </Link>
+          {!isLoading && user && (
+            <>
+              <Link href="/agent/account" className="hover:text-zinc-900">
+                Account
+              </Link>
+              <Link href="/agent/dashboard" className="hover:text-zinc-900">
+                Dashboard
+              </Link>
+            </>
+          )}
+
+          <span className="ml-2" aria-hidden="true">
+            ·
+          </span>
+
+          {!isLoading && !user && (
+            <a href="/auth/login" className="hover:text-zinc-900">
+              Log in
+            </a>
+          )}
+          {!isLoading && user && (
+            <a href="/auth/logout" className="hover:text-zinc-900">
+              Log out
+            </a>
+          )}
         </nav>
       </div>
     </header>

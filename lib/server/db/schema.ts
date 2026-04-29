@@ -44,6 +44,7 @@ export const agents = pgTable(
     name: text("name").notNull(),
     role: agentRoleEnum("role").notNull().default("both"),
     apiKeyHash: text("api_key_hash").notNull(),
+    ownerUserId: text("owner_user_id"),
     locusWalletAddress: text("locus_wallet_address"),
     lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true }),
     isManuallyDisabled: boolean("is_manually_disabled").notNull().default(false),
