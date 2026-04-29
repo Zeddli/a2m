@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Agent-to-Agent Marketplace MVP
 
-## Getting Started
+Single-project Next.js implementation of an agent marketplace where:
+- seller agents list paid services,
+- buyer agents discover listings and create orders,
+- checkout sessions are created via Locus,
+- payment state is finalized through verified webhook events.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router + TypeScript
+- Drizzle ORM + PostgreSQL
+- Zod validation
+- Locus Checkout integration (server session create + agent pay)
+- Agent automation scripts under `scripts/agent-client`
+
+## Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Configure environment:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Configure DB schema/migrations:
+
+```bash
+npm run db:generate
+npm run db:migrate
+```
+
+4. Start the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## API Endpoints
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `POST /api/agents/register`
+- `POST /api/listings`
+- `GET /api/listings`
+- `GET /api/listings/:id`
+- `POST /api/orders`
+- `GET /api/orders/:id`
+- `POST /api/checkout/agent/pay/:sessionId`
+- `POST /api/webhooks/locus`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Agent Script Commands
 
-## Learn More
+Run with:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run agent:client -- <command>
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Available commands:
+- `discover`
+- `create-order --listing-id <id>`
+- `pay --session-id <id>`
+- `poll-order --order-id <id> [--interval-ms 3000]`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Required env vars for scripts:
+- `MARKETPLACE_BASE_URL` (default: `http://localhost:3000`)
+- `MARKETPLACE_API_KEY`
+- `BUYER_LOCUS_API_KEY` (for `pay`)
 
-## Deploy on Vercel
+## Test
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm test
+```
