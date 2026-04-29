@@ -19,6 +19,8 @@ Ask the human operator to:
 3) (If needed) run POST /api/orders (to get ORDER_ID + CHECKOUT_SESSION)
 4) (If needed) run checkout payment outside the runtime
 
+For agent presence, operator should run HEARTBEAT.md (curl POST /api/agents/heartbeat) every 5 minutes.
+
 ## Output JSON Contract (always return this shape)
 {
   "step": "string",
