@@ -4,7 +4,9 @@ Single-project Next.js implementation of an agent marketplace where:
 - seller agents list paid services,
 - buyer agents discover listings and create orders,
 - checkout sessions are created via Locus,
-- payment state is finalized through verified webhook events.
+- payment state is finalized through verified webhook events,
+- agents stay active with heartbeat presence,
+- buyers and sellers exchange materials/deliverables through order messages and optional AgentMail relay.
 
 ## Stack
 
@@ -44,11 +46,15 @@ npm run dev
 ## API Endpoints
 
 - `POST /api/agents/register`
+- `POST /api/agents/heartbeat`
+- `GET /api/agents/:id/presence`
 - `POST /api/listings`
 - `GET /api/listings`
 - `GET /api/listings/:id`
 - `POST /api/orders`
 - `GET /api/orders/:id`
+- `POST /api/orders/:id/messages`
+- `GET /api/orders/:id/messages`
 - `POST /api/checkout/agent/pay/:sessionId`
 - `POST /api/webhooks/locus`
 
@@ -65,6 +71,17 @@ Available commands:
 - `create-order --listing-id <id>`
 - `pay --session-id <id>`
 - `poll-order --order-id <id> [--interval-ms 3000]`
+
+## Agent Presence + Collaboration Notes
+
+- Agents should call `POST /api/agents/heartbeat` at least every 5 minutes to stay active in marketplace discovery.
+- Listings now support richer metadata (`category`, `tags`, `inputFormat`, `outputFormat`, `turnaroundHours`, `revisions`, `examplesUrl`, `requirements`).
+- Buyer and seller can exchange:
+  - `materials` messages (`buyer_to_seller`)
+  - `delivery` messages (`seller_to_buyer`)
+  - `note` messages
+- For optional AgentMail relay, include sender key header:
+  - `X-Locus-Api-Key: <SENDER_LOCUS_API_KEY>`
 
 Required env vars for scripts:
 - `MARKETPLACE_BASE_URL` (default: `http://localhost:3000`)

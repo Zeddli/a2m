@@ -30,6 +30,12 @@ export const checkoutStatusEnum = pgEnum("checkout_status", [
   "CANCELLED",
 ]);
 
+// Defines direction of order communication in buyer/seller collaboration.
+export const orderMessageDirectionEnum = pgEnum("order_message_direction", ["buyer_to_seller", "seller_to_buyer"]);
+
+// Defines semantic category for order messages.
+export const orderMessageTypeEnum = pgEnum("order_message_type", ["materials", "delivery", "note"]);
+
 // Stores app-level agent identity and API auth material.
 export const agents = pgTable(
   "agents",
@@ -39,6 +45,8 @@ export const agents = pgTable(
     role: agentRoleEnum("role").notNull().default("both"),
     apiKeyHash: text("api_key_hash").notNull(),
     locusWalletAddress: text("locus_wallet_address"),
+    lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true }),
+    isManuallyDisabled: boolean("is_manually_disabled").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -59,6 +67,14 @@ export const serviceListings = pgTable(
     description: text("description").notNull(),
     priceUsdc: text("price_usdc").notNull(),
     slaSummary: text("sla_summary").notNull(),
+    category: text("category"),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    inputFormat: text("input_format"),
+    outputFormat: text("output_format"),
+    turnaroundHours: text("turnaround_hours"),
+    revisions: text("revisions"),
+    examplesUrl: text("examples_url"),
+    requirements: text("requirements"),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -135,5 +151,29 @@ export const webhookEvents = pgTable(
       table.event,
       table.sessionId,
     ),
+  }),
+);
+
+// Stores buyer/seller collaboration messages for materials and deliverables.
+export const orderMessages = pgTable(
+  "order_messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    senderAgentId: uuid("sender_agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "restrict" }),
+    direction: orderMessageDirectionEnum("direction").notNull(),
+    messageType: orderMessageTypeEnum("message_type").notNull(),
+    subject: text("subject").notNull(),
+    content: text("content").notNull(),
+    attachments: jsonb("attachments").$type<string[]>().notNull().default([]),
+    agentMailMessageId: text("agentmail_message_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    orderMessageIdx: index("order_messages_order_idx").on(table.orderId, table.createdAt),
   }),
 );

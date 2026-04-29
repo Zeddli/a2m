@@ -3,6 +3,7 @@ import { requireAgent } from "@/lib/server/auth";
 import { getDb } from "@/lib/server/db/client";
 import { agents, serviceListings } from "@/lib/server/db/schema";
 import { fail, ok, parseJson } from "@/lib/server/http";
+import { isAgentActive } from "@/lib/server/presence";
 import { createListingSchema } from "@/lib/server/schemas";
 
 // Creates a new service listing for the authenticated seller agent.
@@ -23,6 +24,14 @@ export async function POST(request: Request) {
         description: input.description,
         priceUsdc: input.priceUsdc,
         slaSummary: input.slaSummary,
+        category: input.category || null,
+        tags: input.tags,
+        inputFormat: input.inputFormat || null,
+        outputFormat: input.outputFormat || null,
+        turnaroundHours: input.turnaroundHours || null,
+        revisions: input.revisions || null,
+        examplesUrl: input.examplesUrl || null,
+        requirements: input.requirements || null,
       })
       .returning();
 
@@ -45,12 +54,22 @@ export async function GET() {
         description: serviceListings.description,
         priceUsdc: serviceListings.priceUsdc,
         slaSummary: serviceListings.slaSummary,
+        category: serviceListings.category,
+        tags: serviceListings.tags,
+        inputFormat: serviceListings.inputFormat,
+        outputFormat: serviceListings.outputFormat,
+        turnaroundHours: serviceListings.turnaroundHours,
+        revisions: serviceListings.revisions,
+        examplesUrl: serviceListings.examplesUrl,
+        requirements: serviceListings.requirements,
         isActive: serviceListings.isActive,
         createdAt: serviceListings.createdAt,
         seller: {
           id: agents.id,
           name: agents.name,
           role: agents.role,
+          lastHeartbeatAt: agents.lastHeartbeatAt,
+          isManuallyDisabled: agents.isManuallyDisabled,
         },
       })
       .from(serviceListings)
@@ -58,7 +77,15 @@ export async function GET() {
       .where(eq(serviceListings.isActive, true))
       .orderBy(desc(serviceListings.createdAt));
 
-    return ok({ listings: rows });
+    return ok({
+      listings: rows.map((listing) => ({
+        ...listing,
+        seller: {
+          ...listing.seller,
+          isActive: isAgentActive(listing.seller.lastHeartbeatAt, listing.seller.isManuallyDisabled),
+        },
+      })),
+    });
   } catch {
     return fail("Failed to load listings", 500);
   }

@@ -47,10 +47,23 @@ export default async function ListingsPage() {
               <p className="text-sm text-zinc-700">{listing.description}</p>
               <p className="mt-3 text-sm">
                 Seller: <strong>{listing.seller.name}</strong>
+                {listing.seller.isActive ? (
+                  <span className="ml-2 rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">active</span>
+                ) : (
+                  <span className="ml-2 rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-700">inactive</span>
+                )}
               </p>
               <p className="text-sm">
                 Price: <strong>{listing.priceUsdc} USDC</strong>
               </p>
+              {listing.category && <p className="mt-1 text-xs text-zinc-600">Category: {listing.category}</p>}
+              {listing.tags.length > 0 && (
+                <p className="mt-1 text-xs text-zinc-600">Tags: {listing.tags.join(", ")}</p>
+              )}
+              {listing.turnaroundHours && (
+                <p className="mt-1 text-xs text-zinc-600">Turnaround: {listing.turnaroundHours} hours</p>
+              )}
+              {listing.revisions && <p className="mt-1 text-xs text-zinc-600">Revisions: {listing.revisions}</p>}
               <p className="mt-1 text-xs text-zinc-600">{listing.slaSummary}</p>
               <Link
                 href={`/listings/${listing.id}`}

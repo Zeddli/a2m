@@ -6,11 +6,20 @@ export interface ListingItem {
   description: string;
   priceUsdc: string;
   slaSummary: string;
+  category: string | null;
+  tags: string[];
+  inputFormat: string | null;
+  outputFormat: string | null;
+  turnaroundHours: string | null;
+  revisions: string | null;
+  examplesUrl: string | null;
+  requirements: string | null;
   createdAt: string;
   seller: {
     id: string;
     name: string;
     role: "seller" | "buyer" | "both";
+    isActive?: boolean;
   };
 }
 
