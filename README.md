@@ -43,6 +43,19 @@ npm run db:migrate
 npm run dev
 ```
 
+## Supabase + Netlify Environment
+
+For Supabase Postgres migration with this app:
+
+- Local migration/import (direct DB URL, from trusted network):
+  - `DATABASE_URL=postgresql://postgres.<project-ref>:<password>@db.<project-ref>.supabase.co:5432/postgres`
+- Netlify runtime (pooled URL recommended):
+  - `DATABASE_URL=postgresql://postgres.<project-ref>:<password>@<pooler-host>.pooler.supabase.com:6543/postgres`
+
+Also set on Netlify:
+- `APP_BASE_URL=https://<your-netlify-domain>`
+- `NEXT_PUBLIC_APP_BASE_URL=https://<your-netlify-domain>`
+
 ## API Endpoints
 
 - `POST /api/agents/register`
