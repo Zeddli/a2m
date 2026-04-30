@@ -26,6 +26,18 @@ export interface LatestPaymentProof {
 export interface AgentWallet {
   locusWalletAddress: string | null;
   latestPaymentProof: LatestPaymentProof | null;
+  transactionHistory: AgentTransaction[];
+}
+
+export interface AgentTransaction {
+  orderId: string;
+  status: string;
+  amountUsdc: string;
+  paymentTxHash: string | null;
+  payerAddress: string | null;
+  paidAt: Date | null;
+  updatedAt: Date;
+  roleInOrder: "buyer" | "seller";
 }
 
 export interface AgentAccountData {
@@ -116,6 +128,73 @@ async function getLatestPaymentProofForAgent(agentId: string): Promise<LatestPay
     : null;
 
   return pickNewestPaymentProof(buyerProof, sellerProof);
+}
+
+// Loads the latest order history for an agent from both buyer and seller perspectives.
+async function getTransactionHistoryForAgent(agentId: string): Promise<AgentTransaction[]> {
+  const db = getDb();
+  const historyLimitPerRole = 10;
+
+  const buyerOrders = await db
+    .select({
+      orderId: orders.id,
+      status: orders.status,
+      amountUsdc: orders.amountUsdc,
+      paymentTxHash: orders.paymentTxHash,
+      payerAddress: orders.payerAddress,
+      paidAt: orders.paidAt,
+      updatedAt: orders.updatedAt,
+    })
+    .from(orders)
+    .where(eq(orders.buyerAgentId, agentId))
+    .orderBy(desc(orders.updatedAt))
+    .limit(historyLimitPerRole);
+
+  const sellerOrders = await db
+    .select({
+      orderId: orders.id,
+      status: orders.status,
+      amountUsdc: orders.amountUsdc,
+      paymentTxHash: orders.paymentTxHash,
+      payerAddress: orders.payerAddress,
+      paidAt: orders.paidAt,
+      updatedAt: orders.updatedAt,
+    })
+    .from(orders)
+    .where(eq(orders.sellerAgentId, agentId))
+    .orderBy(desc(orders.updatedAt))
+    .limit(historyLimitPerRole);
+
+  const transactionMap = new Map<string, AgentTransaction>();
+
+  for (const order of buyerOrders) {
+    transactionMap.set(order.orderId, {
+      orderId: order.orderId,
+      status: order.status,
+      amountUsdc: order.amountUsdc,
+      paymentTxHash: order.paymentTxHash,
+      payerAddress: order.payerAddress,
+      paidAt: order.paidAt,
+      updatedAt: order.updatedAt,
+      roleInOrder: "buyer",
+    });
+  }
+
+  for (const order of sellerOrders) {
+    if (transactionMap.has(order.orderId)) continue;
+    transactionMap.set(order.orderId, {
+      orderId: order.orderId,
+      status: order.status,
+      amountUsdc: order.amountUsdc,
+      paymentTxHash: order.paymentTxHash,
+      payerAddress: order.payerAddress,
+      paidAt: order.paidAt,
+      updatedAt: order.updatedAt,
+      roleInOrder: "seller",
+    });
+  }
+
+  return Array.from(transactionMap.values()).sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime());
 }
 
 /**
@@ -217,6 +296,7 @@ export async function getAgentAccountData(params: {
 
   const selected = agentProfiles.find((agent) => agent.id === params.selectedAgentId) ?? agentProfiles[0];
   const latestPaymentProof = await getLatestPaymentProofForAgent(selected.id);
+  const transactionHistory = await getTransactionHistoryForAgent(selected.id);
 
   return {
     agents: agentProfiles,
@@ -224,6 +304,7 @@ export async function getAgentAccountData(params: {
     selectedAgentWallet: {
       locusWalletAddress: selected.locusWalletAddress,
       latestPaymentProof,
+      transactionHistory,
     },
   };
 }

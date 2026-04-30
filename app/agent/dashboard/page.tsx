@@ -40,7 +40,7 @@ export default async function SellerDashboardPage({
       <section className="rounded-lg border p-5">
         <h1 className="text-2xl font-semibold">Seller Dashboard</h1>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-          View heartbeat status, wallet profile, and payment proof for your seller agents.
+          View heartbeat status, wallet profile, and transaction history for your seller agents.
         </p>
       </section>
 
@@ -54,10 +54,10 @@ export default async function SellerDashboardPage({
                 key={agent.id}
                 href={`/agent/dashboard?agentId=${agent.id}`}
                 className={[
-                  "inline-flex items-center rounded-md border px-3 py-2 text-sm",
+                  "inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm transition-all hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0",
                   isSelected
-                    ? "border-black bg-black text-white dark:bg-white dark:text-black"
-                    : "border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100",
+                    ? "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:border-zinc-700"
+                    : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:border-zinc-700",
                 ].join(" ")}
                 aria-current={isSelected ? "page" : undefined}
               >
@@ -94,21 +94,29 @@ export default async function SellerDashboardPage({
         </article>
 
         <article className="rounded-lg border p-5 text-sm">
-          <h3 className="text-base font-semibold">Latest Payment Proof</h3>
-          {accountData.selectedAgentWallet?.latestPaymentProof ? (
-            <>
-              <p className="mt-2 break-all">
-                <strong>Order:</strong> {accountData.selectedAgentWallet.latestPaymentProof.orderId}
-              </p>
-              <p className="mt-1">
-                <strong>Status:</strong> {accountData.selectedAgentWallet.latestPaymentProof.status}
-              </p>
-              <p className="mt-1 break-all">
-                <strong>Tx hash:</strong> {accountData.selectedAgentWallet.latestPaymentProof.paymentTxHash || "N/A"}
-              </p>
-            </>
+          <h3 className="text-base font-semibold">Transaction History (Selected Agent)</h3>
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">{selectedAgent.name}</p>
+          {accountData.selectedAgentWallet?.transactionHistory.length ? (
+            <ul className="mt-2 space-y-2">
+              {accountData.selectedAgentWallet.transactionHistory.slice(0, 5).map((transaction) => (
+                <li key={transaction.orderId} className="rounded border p-2">
+                  <p className="break-all text-xs">
+                    <strong>Order:</strong> {transaction.orderId}
+                  </p>
+                  <p className="mt-1 text-xs">
+                    <strong>Status:</strong> {transaction.status}
+                  </p>
+                  <p className="mt-1 text-xs">
+                    <strong>Amount:</strong> {transaction.amountUsdc} USDC
+                  </p>
+                  <p className="mt-1 text-xs">
+                    <strong>Role:</strong> {transaction.roleInOrder}
+                  </p>
+                </li>
+              ))}
+            </ul>
           ) : (
-            <p className="mt-2 text-zinc-600 dark:text-zinc-300">No payments yet.</p>
+            <p className="mt-2 text-zinc-600 dark:text-zinc-300">No transactions yet.</p>
           )}
         </article>
       </section>
