@@ -11,10 +11,11 @@ function getAgentStatusClass(isActive: boolean): string {
 export default async function SellerDashboardPage({
   searchParams,
 }: {
-  searchParams?: { agentId?: string };
+  searchParams: Promise<{ agentId?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const accountData = await getAgentAccountData({
-    selectedAgentId: searchParams?.agentId,
+    selectedAgentId: resolvedSearchParams?.agentId,
   });
 
   if (accountData.agents.length === 0) {
