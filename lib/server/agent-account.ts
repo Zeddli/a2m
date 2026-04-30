@@ -122,7 +122,7 @@ async function getLatestPaymentProofForAgent(agentId: string): Promise<LatestPay
  * Returns the user's agents and (for the selected agent) their wallet/payment proof.
  */
 export async function getAgentAccountData(params: {
-  ownerUserId: string;
+  ownerUserId?: string;
   selectedAgentId?: string;
 }): Promise<AgentAccountData> {
   const db = getDb();
@@ -140,33 +140,61 @@ export async function getAgentAccountData(params: {
     | LegacyUserAgentRow[] = [];
 
   try {
-    userAgents = await db
-      .select({
-        id: agents.id,
-        name: agents.name,
-        role: agents.role,
-        locusWalletAddress: agents.locusWalletAddress,
-        lastHeartbeatAt: agents.lastHeartbeatAt,
-        isManuallyDisabled: agents.isManuallyDisabled,
-        createdAt: agents.createdAt,
-      })
-      .from(agents)
-      .where(eq(agents.ownerUserId, params.ownerUserId))
-      .orderBy(desc(agents.createdAt));
+    if (params.ownerUserId) {
+      userAgents = await db
+        .select({
+          id: agents.id,
+          name: agents.name,
+          role: agents.role,
+          locusWalletAddress: agents.locusWalletAddress,
+          lastHeartbeatAt: agents.lastHeartbeatAt,
+          isManuallyDisabled: agents.isManuallyDisabled,
+          createdAt: agents.createdAt,
+        })
+        .from(agents)
+        .where(eq(agents.ownerUserId, params.ownerUserId))
+        .orderBy(desc(agents.createdAt));
+    } else {
+      userAgents = await db
+        .select({
+          id: agents.id,
+          name: agents.name,
+          role: agents.role,
+          locusWalletAddress: agents.locusWalletAddress,
+          lastHeartbeatAt: agents.lastHeartbeatAt,
+          isManuallyDisabled: agents.isManuallyDisabled,
+          createdAt: agents.createdAt,
+        })
+        .from(agents)
+        .orderBy(desc(agents.createdAt));
+    }
   } catch (error) {
     if (!isMissingAgentPresenceColumnsError(error)) throw error;
 
-    userAgents = await db
-      .select({
-        id: agents.id,
-        name: agents.name,
-        role: agents.role,
-        locusWalletAddress: agents.locusWalletAddress,
-        createdAt: agents.createdAt,
-      })
-      .from(agents)
-      .where(eq(agents.ownerUserId, params.ownerUserId))
-      .orderBy(desc(agents.createdAt));
+    if (params.ownerUserId) {
+      userAgents = await db
+        .select({
+          id: agents.id,
+          name: agents.name,
+          role: agents.role,
+          locusWalletAddress: agents.locusWalletAddress,
+          createdAt: agents.createdAt,
+        })
+        .from(agents)
+        .where(eq(agents.ownerUserId, params.ownerUserId))
+        .orderBy(desc(agents.createdAt));
+    } else {
+      userAgents = await db
+        .select({
+          id: agents.id,
+          name: agents.name,
+          role: agents.role,
+          locusWalletAddress: agents.locusWalletAddress,
+          createdAt: agents.createdAt,
+        })
+        .from(agents)
+        .orderBy(desc(agents.createdAt));
+    }
   }
 
   const agentProfiles: AgentProfile[] = userAgents.map((agent) => ({

@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getAuthenticatedUserSub } from "@/lib/server/auth0";
 import { getAgentAccountData } from "@/lib/server/agent-account";
 
 // Returns visual style classes for active and inactive agent status.
@@ -15,11 +13,7 @@ export default async function SellerDashboardPage({
 }: {
   searchParams?: { agentId?: string };
 }) {
-  const ownerUserId = await getAuthenticatedUserSub();
-  if (!ownerUserId) redirect("/auth/login?returnTo=/agent/dashboard");
-
   const accountData = await getAgentAccountData({
-    ownerUserId,
     selectedAgentId: searchParams?.agentId,
   });
 
@@ -33,16 +27,7 @@ export default async function SellerDashboardPage({
           </p>
         </section>
         <section className="rounded-lg border border-blue-200 bg-blue-50 p-5 text-sm dark:border-blue-900 dark:bg-blue-950">
-          <p className="font-medium">No registered agents yet.</p>
-          <p className="mt-2 text-zinc-700 dark:text-zinc-200">Register an agent to unlock seller dashboard metrics.</p>
-          <div className="mt-4">
-            <Link
-              href="/agent/register"
-              className="inline-block rounded-md bg-black px-4 py-2 text-sm text-white dark:bg-white dark:text-black"
-            >
-              Register an agent
-            </Link>
-          </div>
+          <p className="font-medium">No agents are currently registered in the marketplace.</p>
         </section>
       </div>
     );
@@ -60,7 +45,7 @@ export default async function SellerDashboardPage({
       </section>
 
       <section className="rounded-lg border p-5">
-        <h2 className="text-lg font-semibold">Your Agents</h2>
+        <h2 className="text-lg font-semibold">Marketplace Agents</h2>
         <div className="mt-4 flex flex-wrap gap-3">
           {accountData.agents.map((agent) => {
             const isSelected = agent.id === selectedAgent.id;

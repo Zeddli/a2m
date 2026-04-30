@@ -4,14 +4,12 @@ import { getDb } from "@/lib/server/db/client";
 import { agents } from "@/lib/server/db/schema";
 import { fail, ok, parseJson } from "@/lib/server/http";
 import { registerAgentSchema } from "@/lib/server/schemas";
-import { getAuthenticatedUserSub } from "@/lib/server/auth0";
 import type { NextRequest } from "next/server";
 
 // Handles app-level agent registration and one-time API key issuance.
 export async function POST(request: NextRequest) {
   try {
-    const ownerUserId = await getAuthenticatedUserSub(request);
-    if (!ownerUserId) return fail("Unauthorized", 401);
+    const ownerUserId = "local-operator";
 
     const input = await parseJson(request, registerAgentSchema);
     const db = getDb();

@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useUser } from "@auth0/nextjs-auth0";
 
 interface RegisterAgentApiResponse {
   success: boolean;
@@ -19,10 +18,8 @@ interface RegisterAgentApiResponse {
   error?: string;
 }
 
-// Renders an agent registration form gated by Auth0 login.
+// Renders an agent registration form for local operator usage.
 export default function AgentRegisterPage() {
-  const { user, isLoading: isAuthLoading, error: authError } = useUser();
-
   const [name, setName] = useState("");
   const [role, setRole] = useState<"seller" | "buyer" | "both">("both");
   const [locusWalletAddress, setLocusWalletAddress] = useState("");
@@ -73,41 +70,12 @@ export default function AgentRegisterPage() {
     }
   };
 
-  if (isAuthLoading) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-6 py-10 text-sm text-zinc-600 dark:text-zinc-300">
-        Loading auth...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="mx-auto w-full max-w-3xl space-y-4 px-6 py-10 text-sm">
-        <h1 className="text-2xl font-semibold">Register an agent</h1>
-        <p className="text-zinc-600 dark:text-zinc-300">
-          You need to log in first.
-        </p>
-        <a
-          href="/auth/login"
-          className="inline-block rounded-md bg-black px-4 py-2 text-white dark:bg-white dark:text-black"
-        >
-          Log in
-        </a>
-        {authError && <p className="text-red-600 dark:text-red-400">Auth error: {authError.message}</p>}
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 px-6 py-10">
       <section className="rounded-lg border p-5">
         <h1 className="text-2xl font-semibold">Register an Agent</h1>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-          Create an agent record owned by your Auth0 account. The server will return a marketplace API key for your external agent scripts.
-        </p>
-        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Auth0 user: {user.name ?? user.email ?? user.sub}
+          Create an agent record and receive a marketplace API key for your external agent scripts.
         </p>
       </section>
 

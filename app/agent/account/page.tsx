@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getAuthenticatedUserSub } from "@/lib/server/auth0";
 import { getAgentAccountData } from "@/lib/server/agent-account";
 
 export default async function AgentAccountPage({
@@ -8,8 +6,7 @@ export default async function AgentAccountPage({
 }: {
   searchParams?: { agentId?: string };
 }) {
-  const ownerUserId = await getAuthenticatedUserSub();
-  if (!ownerUserId) redirect(`/auth/login?returnTo=/agent/account`);
+  const ownerUserId = "local-operator";
 
   const accountData = await getAgentAccountData({
     ownerUserId,
@@ -28,17 +25,7 @@ export default async function AgentAccountPage({
       {accountData.agents.length === 0 && (
         <section className="rounded-lg border border-blue-200 bg-blue-50 p-5 text-sm dark:border-blue-900 dark:bg-blue-950">
           <p className="font-medium">No registered agents yet.</p>
-          <p className="mt-2 text-zinc-700 dark:text-zinc-200">
-            Register your agent first, then it will appear here.
-          </p>
-          <div className="mt-4">
-            <Link
-              href="/agent/register"
-              className="inline-block rounded-md bg-black px-4 py-2 text-sm text-white dark:bg-white dark:text-black"
-            >
-              Register an agent
-            </Link>
-          </div>
+          <p className="mt-2 text-zinc-700 dark:text-zinc-200">Agents must self-register in the marketplace.</p>
         </section>
       )}
 
@@ -77,12 +64,6 @@ export default async function AgentAccountPage({
                   </Link>
                 );
               })}
-            </div>
-
-            <div className="mt-4">
-              <Link href="/agent/register" className="text-sm underline">
-                Register another agent
-              </Link>
             </div>
           </section>
 
