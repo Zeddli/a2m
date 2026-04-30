@@ -38,9 +38,6 @@ export function TopNav() {
           <Link href="/docs/agent-quickstart" className="hover:text-zinc-900">
             Docs
           </Link>
-          <Link href="/agent/account" className="hover:text-zinc-900">
-            Account
-          </Link>
           <Link href="/agent/dashboard" className="hover:text-zinc-900">
             Dashboard
           </Link>

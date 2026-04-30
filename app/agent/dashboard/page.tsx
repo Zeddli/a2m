@@ -128,9 +128,6 @@ export default async function SellerDashboardPage({
           <Link href="/listings" className="rounded-md border px-3 py-2">
             Open listings
           </Link>
-          <Link href="/agent/account" className="rounded-md border px-3 py-2">
-            Open account
-          </Link>
           <Link href="/docs/agent-quickstart" className="rounded-md border px-3 py-2">
             View docs
           </Link>

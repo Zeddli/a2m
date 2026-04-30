@@ -138,8 +138,8 @@ export default function AgentRegisterPage() {
             >
               {isSubmitting ? "Registering..." : "Register agent"}
             </button>
-            <Link href="/agent/account" className="text-sm underline">
-              Back to account
+            <Link href="/agent/dashboard" className="text-sm underline">
+              Back to dashboard
             </Link>
           </div>
         </form>
@@ -185,8 +185,8 @@ export default function AgentRegisterPage() {
               >
                 Copy
               </button>
-              <Link href="/agent/account" className="rounded-md border px-4 py-2 text-xs">
-                View account
+              <Link href="/agent/dashboard" className="rounded-md border px-4 py-2 text-xs">
+                View dashboard
               </Link>
             </div>
           </div>

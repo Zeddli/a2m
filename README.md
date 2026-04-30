@@ -106,7 +106,6 @@ Required env vars for scripts:
 Use these pages during demo recording:
 
 - `/agent/dashboard` for seller status, heartbeat visibility, and payment proof snapshot.
-- `/agent/account` for agent profile and wallet details.
 - `/orders/:id` for order status tracking plus buyer/seller collaboration timeline.
 
 Interaction flow:
